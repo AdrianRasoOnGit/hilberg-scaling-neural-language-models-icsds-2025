@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this code or the results, you can cite the ICSDS 2025 presentation"
+
+title: "Relating Loss Function Scaling in Neural Language Models to Hilberg's Conjecture"
+authors:
+  - family-names: "Raso González"
+    given-names: "Adrián"
+    affiliation: "Complutense University of Madrid"
+    email: "adrraso@ucm.es"
+
+date-released: "2025-12-16"
+version: "1.0.0"
+
+type: publication
+
+conference:
+  name: "IMS International Conference on Statistics and Data Science"
+  year: 2025
+
+url: "https://github.com/AdrianRasoOnGit/hilberg-scaling-neural-language-models-icsds-2025"

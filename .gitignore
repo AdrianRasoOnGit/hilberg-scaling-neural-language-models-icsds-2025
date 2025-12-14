@@ -1,0 +1,64 @@
+# Emacs backup files
+*~
+\#*\#
+.\#*
+
+# Metaproject
+*.org
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+.venv/
+.env/
+
+# Data
+data/wikipedia_*
+src/**/wikipedia_*/
+
+# Legacy and milestones
+legacy/
+actual/
+*draft*
+*transcript*
+*.json
+*.cvs
+
+# LaTeX artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.nav
+*.snm
+*.lof
+*.lot
+*.el
+*auto*
+
+# AUCTeX's auto-generated directory
+auto/
+**/auto/
+
+# AUCTeX and Emacs helper files
+*.el
+*.elc
+
+# Temps
+tmp/
+temp/
+scratch/
+trial/
+*trial*

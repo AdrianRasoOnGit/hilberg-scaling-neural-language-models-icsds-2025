@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hilberg_scaling_neural_language_models_icsds_2025"
+version = "0.1.0"
+description = "Research repo for IMS 2025 talk (PPM block entropy estimation and GPT training)."
+authors = [
+  { name = "Adrián Raso González", email = "addraso@ucm.es" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "numpy",
+    "scipy",
+    "pyarrow",
+    "tqdm",
+    "mwparserfromhell",
+    "lxml",
+    "requests",
+    "torch",        
+    "sentencepiece",
+    "datasets",     
+]

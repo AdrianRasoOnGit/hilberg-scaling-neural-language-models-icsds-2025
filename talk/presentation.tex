@@ -1,0 +1,355 @@
+\documentclass{beamer}
+\usepackage{graphicx}
+\usepackage{caption}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{xurl}
+\usepackage[most]{tcolorbox}
+\urlstyle{tt}
+
+\definecolor{deepblue}{RGB}{40,50,160}
+\setbeamercolor{github box}{bg=deepblue, fg=white}
+
+\usetheme{Madrid}
+
+\title{Relating Loss Function Scaling in Neural Language Models to Hilberg's Conjecture}
+\author{Adrián Raso González}
+\institute{Vienna University of Technology}
+\date{IMS International Conference on Statistics and Data Science (ICSDS), 2025}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}{Introduction}
+  \begin{itemize}
+  \item Natural language data violates common modeling asumptions (short-range dependence, finite memory, i.i.d.).
+    \pause
+  \item Hilberg's conjecture (1990) suggests that problems in language modeling may be due to a sublinear scaling of block entropy in language sources of the form
+    \[
+      H(n) \propto n^{\beta}.
+    \]
+    If true, language contains \textbf{unbounded structure}, and a \textbf{non-Markovian scaling}.
+  \end{itemize}
+
+  \pause
+  \vspace{0.5cm}
+  \textbf{Goal:} Empirically estimate $\hat{H}(n)$ growth, fit Hilberg scaling $\hat{\beta}$, and test whether autoregressive neural models of different capacity reproduce this scaling.
+\end{frame}
+
+\begin{frame}{Background}
+  \textit{Block entropy (or joint entropy) growth in natural language, according to Hilberg, follows}
+
+  \[
+    H(n) \sim n^{\beta}, \quad 0 < \beta < 1
+  \]
+
+  \pause
+  
+  In modern accounts, this is usually presented through its relaxed form, using an extensive term plus a subextensive correction:
+
+  \[
+    H(n) \approx A + hn + Cn^{\beta}, \qquad 0 < \beta < 1.
+  \]
+
+  \pause
+
+  Empirically, estimates often find the following:
+  
+  \[
+    \beta \sim 0.5
+  \]
+
+  \pause
+  
+  $\beta$ is called a \textit{Hilberg exponent}, measuring the degree of long-range statistical dependence. Smaller values of $\beta$ hint stronger long-range structure and weak rate of information, while $\beta \to 1$ correspond to soft long-range dependencies and Markovian behavior.
+
+\end{frame}
+
+\begin{frame}{Background}
+  A more accessible formulation of Hilberg's conjecture is obtained by considering the conditional entropy
+  \[
+  h_n \;=\; H(X_n \mid X_1^{n-1}) \;=\; H(n) - H(n-1).
+  \]
+
+  \pause
+
+  If the block entropy grows sublinearly,
+  \[
+    H(n) \propto n^{\beta}, \qquad 0 < \beta < 1,
+  \]
+
+  then the discrete derivative follows the equivalent power law
+  \[
+    h_n \;\propto\; n^{\beta - 1}.
+  \]
+
+  This comes handy because thus we don't need the full joint distribution. With models, the per-token loss at context length $n$ gives us an estimate of this $h_n$, which we can use to study Hilberg scaling. 
+\end{frame}
+  
+  \begin{frame}{Why This May Challenge Models?}
+
+\[
+\text{Finite-memory Markov model} \;\Rightarrow\; H(n) \propto n \;\Rightarrow\; \beta = 1
+\]
+
+\[
+0 < \beta < 1 \;\Rightarrow\; \text{the source exhibits unbounded effective memory}
+\]
+
+\vspace{0.2cm}
+
+\pause
+
+Yet, other modeling paradigms have stronger performance in advanced natural language tasks, like neural LMs, particularly Transformers.
+
+\pause
+
+\begin{itemize}
+  \item Long-range information is mediated through attention and compressed internal representations.
+  \item Their training is local (short-horizon targets), raising the question whether the scaling can implicitly emerge globally.
+  \item Yet, they operate with finite context windows.
+\end{itemize}
+
+\pause
+    \vspace{0.4cm}
+
+    \textbf{Question:} Do neural LMs approximate Hilberg scaling?
+\end{frame}
+
+\begin{frame}{Method}
+  \begin{itemize}
+  \item Data: English Wikipedia dump (20 July 2025)
+    \pause
+  \item Estimate $H(n)$ growth via Prediction by Partial Matching (PPM) over 50 disjoint 1M-token subsets
+    \pause
+  \item Train autoregressive models with increasing capacity (1M, 5M, 10M parameters) and context (128, 512, 1024 tokens)
+    \pause
+  \item Compare Hilberg exponent $\beta$ between the estimated true block entropy $\hat{H}(n)$ growth of the dataset and the discrete derivative $h_n$ of the models loss curves $\ell(n)_\text{model}$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{PPM estimation}
+  \textbf{Why PPM?}
+  \begin{itemize}
+    \item Universal coding method widely used for empirical entropy estimation in text
+    \item Provides per-token code lengths (surprisals) using variable-order context models with escape/backoff
+    \item Lets us estimate how conditional uncertainty decreases with available context
+  \end{itemize}
+
+  \pause
+  \vspace{0.35cm}
+
+  \textbf{Codelength view:}
+  \[
+    L(n) \;=\; \sum_{t=1}^{n} -\log_2 \hat{P}(x_t \mid x_1^{t-1})
+  \qquad\Rightarrow\qquad
+    \hat{H}(n) \approx \mathbb{E}[L(n)].
+  \]
+
+  \pause
+  \vspace{0.25cm}
+
+  \textbf{For context-gain scaling:} we analyze the conditional code length as a function of context $k$ and fit
+  \[
+    \ell(k) \approx \ell_\infty + c\,k^{\beta-1}.
+  \]
+\end{frame}
+
+\begin{frame}{H(n) results}
+  \centering
+  \begin{tabular}{c|c|c}
+    $n$ & $\hat{H}(n)$ & 95\% CI \\
+    \hline
+    1     & 60.20  & (59.04, 61.36) \\
+    2     & 89.39  & (87.23, 91.55) \\
+    5     & 169.73 & (165.16, 174.31) \\
+    10    & 277.13 & (269.30, 284.95) \\
+    20    & 450.05 & (439.15, 460.94) \\
+    50    & 813.98 & (791.29, 836.66) \\
+    100   & 1261.48 & (1230.45, 1292.51) \\
+    200   & 1973.55 & (1923.25, 2023.85) \\
+    500   & 3627.54 & (3542.88, 3712.20) \\
+    1000  & 6036.00 & (5918.66, 6153.35) \\
+    5000  & 22784.35 & (22530.19, 23038.52) \\
+    10000 & 42775.79 & (42337.21, 43214.36) \\
+\end{tabular}
+
+\vspace{0.3cm}
+
+\pause
+\textbf{Hilberg fit:} $\beta \approx 0.5601,\; R^2 \approx 0.9804,\; \text{stderr} \approx 0.0354$
+\end{frame}
+
+\begin{frame}{Considered models}
+
+  Three models are considered in the experiment, each with increasing capacity and context, all autoregressive and using a GPT architecture.
+
+  \vspace{0.5cm}
+
+  \begin{center}
+  \begin{tabular}{lccc}
+    \hline
+    \textbf{Model} & \textbf{Parameters} & \textbf{Context length or block} & \textbf{Epochs} \\
+    \hline
+    Small (S)  & 1M  & 128 tokens & 1 \\
+    Medium (M) & 5M  & 512  tokens & 1 \\
+    Large  (L) & 10M & 1024 tokens & 1 \\
+    \hline
+  \end{tabular}
+
+  \vspace{0.5cm}
+  \end{center}
+
+  The activation function used is GeLU, a standard function for GPT models. For more details on the hyperparameters of the model (hidden size, number of heads, FF dimension, vocabulary size, and such) you can check the Hugging Face collection \textbf{\textit{Hilberg Scaling in Neural Language Models (ICSDS 2025)}} (resources references at the end of the presentation).
+
+\end{frame}
+
+\begin{frame}{Loss function evaluation}
+  \begin{itemize}
+  \item We study the loss function
+    \[
+      \ell(n) = h_n = H(X_t \mid X_{t-n}^{t-1}) = H(n) - H(n - 1)
+    \]
+
+    over a range of context blocks
+    \[
+      n \in \{1,2,4,8,16,32,64,128,256,512,1024\},
+    \]
+    computing the loss function of the model for each block.
+
+  \pause
+
+    \item We fit the context-gain curve with an asymptotic power law:
+    \[
+      \ell(k) \approx \ell_\infty + c\,k^{\beta-1}.
+    \]
+    Here $\beta<1$ corresponds to slow, persistent improvements with additional context.
+
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Results}
+  \begin{itemize}
+  \item Let's remember that the true entropy scaling $\hat{\beta}$ of the dataset is $0.56$, hinting sublinear growth, which is a characteristic exponent of any natural language source. 
+
+  \pause
+    
+\item The considered models show the following values for their Hilberg exponent:
+  \begin{center}
+  \begin{tabular}{lccc}
+  \hline
+  \textbf{Model} & \textbf{Context length} & $\boldsymbol{\beta}$ \\
+  \hline
+  1M   & 128   & $0.6452$ \\
+  5M   & 512   & $0.6209$ \\
+  10M  & 1024  & $0.6198$ \\
+  \hline
+  \end{tabular}
+  \end{center}
+  
+  \item The models exhibit a clear subextensive regime ($\beta<1$), additional context yielding a slow but persistent reduction in loss.
+  
+  \item Across scales, model size mainly shifts the curve downward (lower $\ell_\infty$) rather than strongly changing the exponent.
+
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Results: Pre-asymptotic Analysis}
+  \centering
+  \includegraphics[width=\linewidth]{figures/pre-asymptotic_analysis.png}
+  \vspace{-0.2cm}
+  {\footnotesize Conditional entropy scaling in a pre-asymptotic regime.}
+\end{frame}
+
+\begin{frame}{Conclusions}
+  \begin{itemize}
+  \item Using PPM as an entropy-scaling baseline, we recover a subextensive behavior consistent with Hilberg's growth in the data.
+  \item Transformer LMs exhibit a persistent power law improvement with context: the loss approaches an asymptote as
+    \[
+      \ell(k) \approx \ell_\infty + c\,k^{\beta-1},
+    \]
+    with a stable exponent across model sizes.
+  \item Model scaling primarily improves the level rather than qualitatively changing the shape of the context-gain curve. Long-context gains remain slow but non-negligible.
+  \end{itemize}
+
+  \pause
+
+  \vspace{0.3cm}
+
+  \textbf{Important takeaway:} Autoregressive Transformers reproduce a Hilberg power law decay of conditional entropy with context, linking classical estimates to neural loss curves in the Transformer family.
+\end{frame}
+
+\begin{frame}{References}
+
+\footnotesize
+\begin{thebibliography}{9}
+
+\bibitem{Hilberg1990}
+W. Hilberg,
+\newblock \emph{Der bekannte Grenzwert der redundanzfreien Information in Texten – eine Fehlinterpretation der Shannon-Experimente?}
+\newblock Frequenz, vol. 44, no. 12, pp. 243--248, 1990.
+
+\bibitem{Debowski2014}
+Ł. Dębowski,
+\newblock \emph{Hilberg’s Conjecture – a Challenge for Machine Learning},
+\newblock Schedae Informaticae, vol. 23, pp. 33--44, 2014.
+
+\bibitem{EbelingPoschel1994}
+W. Ebeling and T. Pöschel,
+\newblock \emph{Entropy and Long-Range Correlations in Literary English},
+\newblock Europhysics Letters, vol. 26, no. 4, pp. 241--246, 1994.
+
+\bibitem{Shannon1951}
+C. E. Shannon,
+\newblock \emph{Prediction and Entropy of Printed English},
+\newblock Bell System Technical Journal, vol. 30, no. 1, pp. 50--64, 1951.
+
+\bibitem{TeahanCleary1996}
+W. J. Teahan and J. G. Cleary,
+\newblock \emph{The Entropy of English Using PPM-Based Models},
+\newblock In Proceedings of the IEEE Data Compression Conference (DCC), pp. 53--62, 1996.
+
+\end{thebibliography}
+  
+\end{frame}
+
+\begin{frame}{Resources}
+
+\begin{center}
+  
+\large Code, data, and talk materials available here:
+ 
+\vspace{0.5cm}
+  
+\begin{beamercolorbox}[wd=0.94\paperwidth, sep=10pt, leftskip=1em, rightskip=1em, rounded=true]{github box}
+\textbf{GitHub repo (Method codebase, talk resources)}
+
+\vspace{0.2cm}
+\footnotesize
+\href{https://github.com/AdrianRasoOnGit/hilberg-scaling-neural-language-models-icsds-2025}
+{AdrianRasoOnGit / hilberg-scaling-neural-language-models-icsds-2025}
+\end{beamercolorbox}
+
+\vspace{0.35cm}
+
+\begin{beamercolorbox}[wd=0.94\paperwidth, sep=10pt, leftskip=1em, rightskip=1em, rounded=true]{github box}
+\textbf{Hugging Face collection (Dataset and models)}
+
+\vspace{0.2cm}
+\footnotesize
+\href{https://huggingface.co/collections/AdrianRasoOnHF/hilberg-scaling-in-neural-language-models-icsds-2025}
+{AdrianRasoOnHF / hilberg-scaling-in-neural-language-models-icsds-2025}
+\end{beamercolorbox}
+
+\vspace{0.5cm}
+
+\Large Thank you for your attention.
+
+\vspace{0.2cm}
+
+\end{center}
+
+\end{frame}
+  
+\end{document}
